@@ -1,4 +1,4 @@
-import matplotlib.pyplot as plt
+import plotly.express as px
 import pandas as pd
 import streamlit as st
 
@@ -6,14 +6,14 @@ st.set_page_config(page_title="OSPO Dashboard", layout="wide", page_icon="📊")
 st.title("📊 OSPO Organization Dashboard")
 
 st.markdown("""
-Welcome to the OSPO Compliance Dashboard. This dashboard helps track repository compliance 
+Welcome to the OSPO Compliance Dashboard. This dashboard helps track repository compliance
 with best practices across different organizations.
 """)
 
 
 @st.cache_data
 def load_data():
-    return pd.read_excel("github_repos_info_20251217_ALL.xlsx")
+    return pd.read_parquet("github_repos_info.parquet")
 
 
 df = load_data()
@@ -58,30 +58,34 @@ if len(filtered_orgs) > 0:
         org_compliance_data.append(
             {"Organization": org, "Repositories": org_df.shape[0], "Avg Compliance %": round(avg_compliance, 1)}
         )
-    
+
     org_summary_df = pd.DataFrame(org_compliance_data)
     org_summary_df = org_summary_df.merge(filtered_orgs, on="Organization")
     org_summary_df = org_summary_df.sort_values("repo_count", ascending=False)
-    
+
     st.dataframe(
         org_summary_df[["Organization", "repo_count", "Avg Compliance %"]],
         use_container_width=True,
         hide_index=True,
     )
-    
+
     # Top 5 organizations chart
     st.subheader("Top 5 Organizations by Repository Count")
     top5 = filtered_orgs.nlargest(5, "repo_count")
-    
-    fig, ax = plt.subplots(figsize=(10, 6))
-    colors = plt.cm.Blues([0.4, 0.5, 0.6, 0.7, 0.8])
-    ax.barh(top5["Organization"], top5["repo_count"], color=colors)
-    ax.set_xlabel("Number of Repositories")
-    ax.set_title("Top 5 Organizations")
-    ax.invert_yaxis()
-    plt.tight_layout()
-    st.pyplot(fig)
-    
+
+    fig = px.bar(
+        top5,
+        x="repo_count",
+        y="Organization",
+        orientation="h",
+        title="Top 5 Organizations",
+        labels={"repo_count": "Number of Repositories", "Organization": ""},
+        color="repo_count",
+        color_continuous_scale="Blues",
+    )
+    fig.update_layout(showlegend=False, height=350)
+    st.plotly_chart(fig, use_container_width=True)
+
     st.markdown("""
     ---
     ### Navigation

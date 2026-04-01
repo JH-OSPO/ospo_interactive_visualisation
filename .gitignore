@@ -4,9 +4,11 @@
 # Streamlit
 .streamlit/secrets.toml
 
-# Data files (optional - remove if you want to commit data)
-# *.xlsx
-# *.csv
+# Data files
+*.xlsx
+# Keep parquet and org_data for deployment (remove these lines if data is sensitive)
+# *.parquet
+# org_data/
 
 # Python cache
 __pycache__/

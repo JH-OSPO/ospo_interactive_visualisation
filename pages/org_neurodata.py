@@ -1,4 +1,4 @@
-import matplotlib.pyplot as plt
+import plotly.express as px
 import pandas as pd
 import streamlit as st
 
@@ -8,20 +8,50 @@ st.set_page_config(page_title="neurodata - OSPO Dashboard", layout="wide", page_
 if st.sidebar.button("← Back to Home"):
     st.switch_page("Home.py")
 
-st.title("📊 neurodata")
-st.markdown(f"**Repository Count:** 282")
+st.title("📊 {org_name}")
+st.markdown(f"**Repository Count:** {repo_count:,}")
 
 
 @st.cache_data
-def load_data():
-    return pd.read_excel("github_repos_info_20251217_ALL.xlsx")
+def load_org_data():
+    return pd.read_csv("org_data/neurodata.csv")
 
 
-df = load_data()
-org_df = df[df["Organization"] == "neurodata"].copy()
+df = load_org_data()
+org_name = "neurodata"
+repo_count = 282
 
-# Process binary columns
-org_df["has_license"] = org_df["License"].notna() & (org_df["License"] != "")
+# Compliance Overview
+st.subheader("Compliance Overview")
+
+compliance_data = {
+    "Metric": ["README", "License", "Citation", "Contributing", "Tags"],
+    "Compliance %": [82.3, 100.0, 2.5, 11.7, 20.6],
+}
+
+fig = px.bar(
+    compliance_data,
+    x="Metric",
+    y="Compliance %",
+    title=f"{org_name} - Compliance Metrics",
+    labels={"Metric": "", "Compliance %": "Compliance %"},
+    color="Compliance %",
+    color_continuous_scale="Blues",
+    ymin=0,
+    ymax=100,
+)
+fig.update_layout(showlegend=False, height=400)
+st.plotly_chart(fig, use_container_width=True)
+
+# Display compliance percentages
+col1, col2, col3, col4, col5 = st.columns(5)
+metrics = compliance_data
+for i, metric in enumerate(metrics["Metric"]):
+    with [col1, col2, col3, col4, col5][i]:
+        st.metric(metric, f"{metrics['Compliance %'][i]}%")
+
+# Repository Details
+st.subheader("Repository Details")
 
 binary_cols = [
     "has_readme",
@@ -31,46 +61,9 @@ binary_cols = [
     "has_tags",
 ]
 
-for col in binary_cols:
-    if col != "has_license":
-        org_df[col] = org_df[col].astype(str).str.lower().isin(["1", "true", "yes"])
-    org_df[col] = org_df[col].astype(bool)
+display_df = df[["Repository Name", "repo_url"] + binary_cols].copy()
 
-# Compliance Overview
-st.subheader("Compliance Overview")
-
-compliance = org_df[binary_cols].mean() * 100
-compliance_df = compliance.reset_index()
-compliance_df.columns = ["Metric", "Compliance %"]
-
-fig, ax = plt.subplots(figsize=(10, 6))
-colors = plt.cm.tab10.colors[: len(compliance_df)]
-ax.bar(compliance_df["Metric"], compliance_df["Compliance %"], color=colors)
-ax.set_ylabel("Compliance %")
-ax.set_title("neurodata - Compliance Metrics")
-plt.xticks(rotation=45)
-plt.tight_layout()
-st.pyplot(fig)
-
-# Display compliance percentages
-col1, col2, col3, col4, col5 = st.columns(5)
-metrics = {
-    "README": compliance["has_readme"],
-    "License": compliance["has_license"],
-    "Citation": compliance["has_citation"],
-    "Contributing": compliance["has_contributing"],
-    "Tags": compliance["has_tags"],
-}
-for i, (metric, value) in enumerate(metrics.items()):
-    with [col1, col2, col3, col4, col5][i]:
-        st.metric(metric, f"{value:.1f}%")
-
-# Repository Details
-st.subheader("Repository Details")
-
-display_df = org_df[["Repository Name", "repo_url"] + binary_cols].copy()
-
-editor_key = "repo_editor_neurodata"
+editor_key = "repo_editor_{org_name}"
 
 column_config = {
     "has_readme": st.column_config.CheckboxColumn("has_readme"),
@@ -89,9 +82,6 @@ edited_df = st.data_editor(
     key=editor_key,
 )
 
-for col in binary_cols:
-    edited_df[col] = edited_df[col].astype(bool)
-
 # Missing Best Practices
 st.subheader("Missing Best Practices")
 
@@ -106,6 +96,6 @@ csv = edited_df.to_csv(index=False).encode("utf-8")
 st.download_button(
     label="📥 Download Repository Data as CSV",
     data=csv,
-    file_name="neurodata_repositories.csv",
+    file_name="{org_name}_repositories.csv",
     mime="text/csv",
 )
