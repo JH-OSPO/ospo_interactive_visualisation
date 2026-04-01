@@ -1,2 +1,20 @@
 .venv/
 .ipynb_checkpoints/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Data files (optional - remove if you want to commit data)
+# *.xlsx
+# *.csv
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
