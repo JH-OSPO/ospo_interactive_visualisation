@@ -29,12 +29,10 @@ The dashboard will open in your default browser at `http://localhost:8501`.
 ```
 visualisations/
 ├── Home.py                          # Main landing page with all organizations
-├── interactive_vis.py               # Original single-page app (legacy)
+├── interactive_vis.py               # Legacy shim; do not use as entry point
 ├── generate_pages.py                # Script to generate org pages
-├── github_repos_info_20251217_ALL.xlsx  # Data file
+├── github_repos_info.parquet        # Runtime data file
 ├── requirements.txt                 # Python dependencies
-├── Procfile                         # For Heroku/Railway deployment
-├── setup.sh                         # Setup script for deployment
 ├── DEPLOYMENT.md                    # Detailed deployment instructions
 ├── pages/
 │   ├── org_neurodata.py            # Auto-generated org page
@@ -72,7 +70,7 @@ This creates individual pages for all organizations with >100 repositories.
 
 ## Data Requirements
 
-The dashboard expects an Excel file named `github_repos_info_20251217_ALL.xlsx` with:
+The dashboard expects a Parquet file named `github_repos_info.parquet` with:
 
 | Column | Description |
 |--------|-------------|
@@ -93,8 +91,14 @@ The dashboard expects an Excel file named `github_repos_info_20251217_ALL.xlsx` 
 2. Go to [share.streamlit.io](https://share.streamlit.io)
 3. Create new app with:
    - **Main file path:** `Home.py`
-   - **Python version:** 3.10+
+    - **Python version:** the version used by your deployment environment
 4. Deploy!
+
+Deployment requires these committed runtime assets:
+
+- `github_repos_info.parquet`
+- `org_data/`
+- `pages/`
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions on other platforms.
 

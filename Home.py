@@ -1,6 +1,7 @@
 import plotly.express as px
 import pandas as pd
 import streamlit as st
+from pathlib import Path
 
 st.set_page_config(page_title="OSPO Dashboard", layout="wide", page_icon="📊")
 st.title("📊 OSPO Organization Dashboard")
@@ -13,7 +14,8 @@ with best practices across different organizations.
 
 @st.cache_data
 def load_data():
-    return pd.read_parquet("github_repos_info.parquet")
+    data_path = Path(__file__).with_name("github_repos_info.parquet")
+    return pd.read_parquet(data_path)
 
 
 df = load_data()

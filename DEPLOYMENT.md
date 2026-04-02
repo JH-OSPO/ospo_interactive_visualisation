@@ -23,6 +23,11 @@ The following optimizations have been implemented to reduce deployment time on S
 - Removed `matplotlib` dependency (not needed)
 - Added `pyarrow` for Parquet support
 
+### 5. **Path-Safe Runtime Loading**
+- `Home.py` now reads `github_repos_info.parquet` relative to the script location
+- Organization pages read their CSV files from `org_data/` relative to the page file
+- The legacy `interactive_vis.py` file is now a deprecation shim only
+
 ## Deploying to Streamlit Cloud (Recommended - Free)
 
 ### Step 1: Convert Data and Generate Pages
@@ -48,7 +53,7 @@ git push origin main
 **Important files to commit:**
 - `github_repos_info.parquet` (converted data file)
 - `org_data/*.csv` (pre-computed organization data)
-- Updated `Home.py` and `pages/*.py`
+- Updated `Home.py`, `pages/*.py`, and `generate_pages.py`
 
 ### Step 3: Connect to Streamlit Cloud
 
@@ -58,28 +63,18 @@ git push origin main
 4. Select your repository
 5. Configure:
    - **Main file path:** `Home.py`
-   - **Python version:** 3.10 or higher
+    - **Python version:** match the project environment if you pin one in the future
 6. Click "Deploy!"
 
-### Step 4: Upload Data Files
+### Step 4: Verify the repo contents
 
-Since the Parquet file and org_data folder need to be deployed:
+Make sure these files are present in GitHub before deploying:
 
-**Option A:** Commit the files to GitHub (recommended if data is not sensitive)
-```bash
-git add github_repos_info.parquet org_data/
-git commit -m "Add optimized data files"
-git push origin main
-```
+- `github_repos_info.parquet`
+- `org_data/`
+- `pages/`
 
-**Option B:** If data is sensitive, upload to cloud storage and modify code to load from URL:
-
-```python
-@st.cache_data
-def load_data():
-    url = "https://your-domain.com/github_repos_info.parquet"
-    return pd.read_parquet(url)
-```
+The app does not read the original Excel file at runtime.
 
 ## Deploying to Other Platforms
 
@@ -103,7 +98,6 @@ mkdir -p ~/.streamlit/
 echo "[server]
 headless = true
 port = $PORT
-enableCORS = false
 " > ~/.streamlit/config.toml
 ```
 3. Deploy using `git push heroku main`
@@ -148,7 +142,6 @@ visualisations/
 ├── convert_data.py                  # Convert Excel to Parquet
 ├── generate_pages.py                # Generate org pages + pre-computed data
 ├── github_repos_info.parquet        # Optimized data file (~100 KB)
-├── github_repos_info_20251217_ALL.xlsx  # Original Excel file (keep for reference)
 ├── requirements.txt                 # Python dependencies
 ├── org_data/                        # Pre-computed organization CSV files
 │   ├── jhu_sheridan_libraries.csv
@@ -173,19 +166,21 @@ visualisations/
 ## Security Notes
 
 - ⚠️ **Do not commit** `.streamlit/secrets.toml` to Git
-- Add Excel file to `.gitignore` if it contains sensitive data
+- Keep the original Excel source out of the repo if it contains sensitive data
 - Use environment variables or secure storage for production
 - Consider data sensitivity before committing `.parquet` and `org_data/` files
+- If you regenerate pages, commit the matching `pages/` and `org_data/` outputs together
 
 ## Troubleshooting
 
 ### Slow deployment still?
-1. Check if `.parquet` file is committed to GitHub
-2. Verify `org_data/` folder is included in the repo
-3. Check Streamlit Cloud logs for dependency installation time
+1. Check if `github_repos_info.parquet` is committed to GitHub
+2. Verify `org_data/` and `pages/` are included in the repo
+3. Confirm Streamlit Cloud is pointed at `Home.py`
+4. Check Streamlit Cloud logs for dependency installation time
 
 ### Data file not found?
-Ensure the Parquet file and `org_data/` folder are uploaded to your repository or accessible via URL.
+Ensure `github_repos_info.parquet` and `org_data/` are uploaded to your repository.
 
 ### Pages not generating?
 Run `python generate_pages.py` locally and commit the generated files.

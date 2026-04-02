@@ -1,6 +1,7 @@
 import plotly.express as px
 import pandas as pd
 import streamlit as st
+from pathlib import Path
 
 st.set_page_config(page_title="neurodata - OSPO Dashboard", layout="wide", page_icon="📊")
 
@@ -8,18 +9,20 @@ st.set_page_config(page_title="neurodata - OSPO Dashboard", layout="wide", page_
 if st.sidebar.button("← Back to Home"):
     st.switch_page("Home.py")
 
-st.title("📊 {org_name}")
+org_name = "neurodata"
+repo_count = 282
+
+st.title(f"📊 {org_name}")
 st.markdown(f"**Repository Count:** {repo_count:,}")
 
 
 @st.cache_data
 def load_org_data():
-    return pd.read_csv("org_data/neurodata.csv")
+    data_path = Path(__file__).resolve().parents[1] / "org_data" / "neurodata.csv"
+    return pd.read_csv(data_path)
 
 
 df = load_org_data()
-org_name = "neurodata"
-repo_count = 282
 
 # Compliance Overview
 st.subheader("Compliance Overview")
@@ -37,8 +40,6 @@ fig = px.bar(
     labels={"Metric": "", "Compliance %": "Compliance %"},
     color="Compliance %",
     color_continuous_scale="Blues",
-    ymin=0,
-    ymax=100,
 )
 fig.update_layout(showlegend=False, height=400)
 st.plotly_chart(fig, use_container_width=True)
@@ -63,7 +64,7 @@ binary_cols = [
 
 display_df = df[["Repository Name", "repo_url"] + binary_cols].copy()
 
-editor_key = "repo_editor_{org_name}"
+editor_key = f"repo_editor_{org_name}"
 
 column_config = {
     "has_readme": st.column_config.CheckboxColumn("has_readme"),
@@ -96,6 +97,6 @@ csv = edited_df.to_csv(index=False).encode("utf-8")
 st.download_button(
     label="📥 Download Repository Data as CSV",
     data=csv,
-    file_name="{org_name}_repositories.csv",
+    file_name=f"{org_name}_repositories.csv",
     mime="text/csv",
 )
